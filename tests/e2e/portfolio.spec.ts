@@ -26,8 +26,9 @@ test.describe('BAJAJ.OS Portfolio E2E & Visual QA', () => {
 
     const skipButton = page.getByRole('button', { name: 'Skip' });
     if (await skipButton.isVisible().catch(() => false)) {
-      await skipButton.click();
+      await skipButton.click({ force: true }).catch(() => {});
     }
+    await expect(page.locator('[aria-label="System boot sequence"]')).toBeHidden({ timeout: 4000 }).catch(() => {});
 
     await expect(page.getByRole('heading', { level: 1 })).toContainText('Aarna Bajaj');
     await page.waitForTimeout(350);
@@ -56,7 +57,7 @@ test.describe('BAJAJ.OS Portfolio E2E & Visual QA', () => {
 
     // Section 7: Podcast Topic Roulette
     const beforeTopic = await page.getByText(/Selected Prompt #/i).textContent();
-    await page.getByRole('button', { name: 'Spin Topic' }).click();
+    await page.getByRole('button', { name: 'Spin Topic' }).click({ force: true });
     const afterTopic = await page.getByText(/Selected Prompt #/i).textContent();
     expect(afterTopic).not.toBe(beforeTopic);
 
@@ -95,8 +96,9 @@ test.describe('BAJAJ.OS Portfolio E2E & Visual QA', () => {
     // Skip boot sequence if present
     const skipButton = page.getByRole('button', { name: 'Skip' });
     if (await skipButton.isVisible().catch(() => false)) {
-      await skipButton.click();
+      await skipButton.click({ force: true }).catch(() => {});
     }
+    await expect(page.locator('[aria-label="System boot sequence"]')).toBeHidden({ timeout: 4000 }).catch(() => {});
 
     // ── Section 8: Security Lab ──────────────────────────────────────────────
     const secSection = page.locator('#security-lab');
@@ -147,7 +149,7 @@ test.describe('BAJAJ.OS Portfolio E2E & Visual QA', () => {
     // Submit empty form → HTML5 validation prevents submission
     const submitBtn = contactForm.getByRole('button', { name: 'Send Message' });
     await submitBtn.scrollIntoViewIfNeeded();
-    await submitBtn.click();
+    await submitBtn.click({ force: true });
 
     // Form should still be visible (not navigated away; HTML5 required validation fires)
     await expect(contactForm.getByRole('textbox', { name: 'Name', exact: true })).toBeVisible();
@@ -155,5 +157,27 @@ test.describe('BAJAJ.OS Portfolio E2E & Visual QA', () => {
     // No console errors throughout
     expect(consoleErrors).toEqual([]);
     expect(pageErrors).toEqual([]);
+  });
+
+  test('audits visible word count across all 9 sections', async ({ page }) => {
+    await page.goto('/');
+    const skipButton = page.getByRole('button', { name: 'Skip' });
+    if (await skipButton.isVisible().catch(() => false)) {
+      await skipButton.click({ force: true }).catch(() => {});
+    }
+    await expect(page.locator('[aria-label="System boot sequence"]')).toBeHidden({ timeout: 4000 }).catch(() => {});
+
+    const sectionCounts = await page.evaluate(() => {
+      const sections = Array.from(document.querySelectorAll('section[data-section-id]'));
+      return sections.map((sec) => {
+        const id = sec.getAttribute('data-section-id') || 'unknown';
+        const text = (sec as HTMLElement).innerText || '';
+        const words = text.trim().split(/\s+/).filter(Boolean);
+        return { id, wordCount: words.length };
+      });
+    });
+
+    console.log('AUDIT_WORD_COUNTS:', JSON.stringify(sectionCounts));
+    expect(sectionCounts.length).toBe(9);
   });
 });

@@ -1,10 +1,10 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { Dices, Mic, Pause, Play, Radio, Volume2 } from 'lucide-react';
+import { Dices, Mic, Pause, Play, Radio } from 'lucide-react';
 import { useOS } from '@/components/motion/AppProviders';
 import { DraggableWindow } from '@/components/os/DraggableWindow';
-import { PODCAST_EPISODES, ROULETTE_TOPICS } from '@/content/podcast';
+import { PODCAST_EPISODES, ROULETTE_TOPICS, type RouletteTopic } from '@/content/podcast';
 import { cn } from '@/lib/utils';
 
 function formatSeconds(totalSeconds: number): string {
@@ -26,14 +26,23 @@ export function PodcastSection() {
 
   const activeEpisode =
     PODCAST_EPISODES.find((ep) => ep.id === selectedEpisodeId) ?? PODCAST_EPISODES[0];
-  const activeTopic = ROULETTE_TOPICS[rouletteIndex] ?? ROULETTE_TOPICS[0];
+
+  const activeTopic: RouletteTopic =
+    ROULETTE_TOPICS[rouletteIndex] ??
+    ROULETTE_TOPICS[0] ?? {
+      id: 'topic-1',
+      prompt: 'Why a 48-hour hackathon prototype teaches more than 4 months of reading docs',
+      hook: 'Start with a live crash',
+      tryActionAngle: 'Compare perfection with real feedback',
+      takeaway: 'Ship something runnable tonight',
+    };
 
   const stopSynth = (): void => {
     try {
       oscRef.current?.stop();
       oscRef.current?.disconnect();
     } catch {
-      // Oscillator already stopped.
+      // Already stopped.
     }
     oscRef.current = null;
   };
@@ -95,7 +104,7 @@ export function PodcastSection() {
       osc.start();
       oscRef.current = osc;
     } catch {
-      // Keep UI scrubber functional even if browser blocks Web Audio autoplay.
+      // Fallback
     }
   };
 
@@ -120,6 +129,7 @@ export function PodcastSection() {
       data-section-id="podcast-stage"
       className="mx-auto max-w-7xl scroll-mt-14 px-4 py-20 sm:px-6"
     >
+      {/* 1 Headline & 1 Supporting Line */}
       <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
         <div>
           <div className="inline-flex items-center gap-2 font-mono text-xs tracking-widest text-sky-300 uppercase">
@@ -127,16 +137,17 @@ export function PodcastSection() {
             <span>07 // Podcast &amp; Stage</span>
           </div>
           <h2 className="mt-2 text-2xl font-bold tracking-tight text-white sm:text-4xl">
-            Speaking on Anything With Bias to Action
+            Speaking With Bias to Action
           </h2>
         </div>
 
-        <span className="rounded-full border border-amber-400/35 bg-amber-400/10 px-3 py-1 font-mono text-xs text-amber-200">
-          Episode Slots: TODO Placeholders
-        </span>
+        <p className="max-w-md text-sm font-normal text-slate-300">
+          Audio discussions and live stage roulette on shipping software.
+        </p>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-12">
+        {/* Audio Waveform Player Deck */}
         <div className="lg:col-span-7">
           <DraggableWindow
             title="STAGE // AUDIO DECK"
@@ -149,8 +160,8 @@ export function PodcastSection() {
             }
           >
             {activeEpisode ? (
-              <div className="rounded-xl border border-sky-400/30 bg-slate-950/75 p-5">
-                <div className="flex flex-wrap items-center justify-between gap-2">
+              <div className="rounded-xl border border-sky-400/30 bg-slate-950/75 p-4">
+                <div className="flex items-center justify-between">
                   <span className="font-mono text-xs text-amber-300">
                     {activeEpisode.episodeLabel}
                   </span>
@@ -158,20 +169,23 @@ export function PodcastSection() {
                     {activeEpisode.topicTag}
                   </span>
                 </div>
-                <h3 className="mt-2 text-base font-semibold text-white">{activeEpisode.title}</h3>
-                <p className="mt-1 text-xs text-slate-300">{activeEpisode.summary}</p>
 
+                <h3 className="mt-2 truncate text-base font-semibold text-white">
+                  {activeEpisode.title}
+                </h3>
+
+                {/* Scrubber & Controls */}
                 <div className="mt-4 flex items-center gap-3">
                   <button
                     type="button"
                     onClick={togglePlay}
                     aria-label={isPlaying ? 'Pause audio preview' : 'Play audio preview'}
-                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-sky-400 text-slate-950 transition-colors hover:bg-sky-300"
+                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-sky-400 text-slate-950 transition-colors hover:bg-sky-300"
                   >
                     {isPlaying ? (
-                      <Pause className="h-4 w-4" aria-hidden="true" />
+                      <Pause className="h-4 w-4" />
                     ) : (
-                      <Play className="h-4 w-4 translate-x-0.5" aria-hidden="true" />
+                      <Play className="h-4 w-4 translate-x-0.5" />
                     )}
                   </button>
 
@@ -196,14 +210,14 @@ export function PodcastSection() {
                     onClick={() =>
                       setSpeed((prev) => (prev === 1 ? 1.25 : prev === 1.25 ? 1.5 : 1))
                     }
-                    aria-label="Cycle playback speed"
-                    className="rounded-lg border border-slate-700 bg-slate-900 px-2.5 py-1 font-mono text-xs text-slate-200 hover:border-sky-400/40"
+                    className="rounded-lg border border-slate-700 bg-slate-900 px-2 py-1 font-mono text-xs text-slate-200 hover:border-sky-400/40"
                   >
                     {speed}x
                   </button>
                 </div>
 
-                <div className="mt-4 flex h-7 items-end gap-1" aria-hidden="true">
+                {/* Waveform Visualization */}
+                <div className="mt-3 flex h-6 items-end gap-1" aria-hidden="true">
                   {[35, 68, 45, 90, 52, 76, 40, 88, 60, 48, 82, 55, 70, 42, 64, 38].map(
                     (heightPct, idx) => (
                       <span
@@ -216,22 +230,17 @@ export function PodcastSection() {
                         }}
                         className={cn(
                           'flex-1 rounded-sm transition-all duration-300',
-                          isPlaying ? 'bg-sky-400/80' : 'bg-slate-700/70',
+                          isPlaying ? 'bg-sky-400/80' : 'bg-slate-700/60',
                         )}
                       />
                     ),
                   )}
                 </div>
-
-                <p className="mt-3 flex items-center gap-1.5 font-mono text-[10px] text-slate-400">
-                  <Volume2 className="h-3.5 w-3.5 text-sky-400" aria-hidden="true" />
-                  Placeholder audio uses safe local Web Audio tone until real MP3/podcast links are
-                  supplied.
-                </p>
               </div>
             ) : null}
 
-            <div className="mt-4 grid gap-3 sm:grid-cols-3">
+            {/* Cards show TITLE ONLY */}
+            <div className="mt-4 grid gap-2.5 sm:grid-cols-3">
               {PODCAST_EPISODES.map((ep) => (
                 <button
                   key={ep.id}
@@ -244,61 +253,51 @@ export function PodcastSection() {
                       : 'border-slate-800 bg-slate-950/60 hover:border-slate-700',
                   )}
                 >
-                  <p className="font-mono text-[10px] text-amber-300">{ep.episodeLabel}</p>
-                  <p className="mt-1 line-clamp-2 text-xs font-semibold text-white">{ep.title}</p>
-                  <p className="mt-2 font-mono text-[10px] text-slate-400">{ep.topicTag}</p>
+                  <p className="font-mono text-[10px] text-sky-400">{ep.episodeLabel}</p>
+                  <p className="mt-1 line-clamp-1 text-xs font-semibold text-white">{ep.title}</p>
                 </button>
               ))}
             </div>
           </DraggableWindow>
         </div>
 
+        {/* Topic Roulette Deck */}
         <div className="lg:col-span-5">
           <DraggableWindow
-            title="TOPIC ROULETTE"
-            pathLabel="~/stage/randomizer"
+            title="ROULETTE // STAGE PROMPT"
+            pathLabel="~/stage/random-topic"
             badge={
-              <span className="rounded-full bg-emerald-500/15 px-2 py-0.5 font-mono text-[10px] text-emerald-300">
-                INTERACTIVE
+              <span className="rounded-full bg-amber-500/15 px-2 py-0.5 font-mono text-[10px] text-amber-300">
+                LIVE SPINNER
               </span>
             }
           >
-            <div className="space-y-4">
-              <div className="flex items-center justify-between gap-3">
-                <p className="text-xs text-slate-300">
-                  Spin to generate an impromptu lightning-talk prompt and 3-beat action outline.
+            <div className="flex flex-col justify-between rounded-xl border border-slate-800 bg-slate-950/60 p-4">
+              <div>
+                <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+                  <span className="font-mono text-xs text-sky-300">
+                    Selected Prompt #{activeTopic.id.slice(-1)}
+                  </span>
+                  <span className="rounded bg-slate-800 px-2 py-0.5 font-mono text-[10px] text-slate-400">
+                    Stage Prompt
+                  </span>
+                </div>
+
+                <p className="mt-3 text-sm font-semibold text-white">
+                  {activeTopic.prompt}
                 </p>
+              </div>
+
+              <div className="mt-6 flex justify-end">
                 <button
                   type="button"
                   onClick={spinTopicRoulette}
-                  className="inline-flex shrink-0 items-center gap-2 rounded-xl bg-sky-400 px-3.5 py-2 font-mono text-xs font-semibold text-slate-950 transition-transform hover:-translate-y-0.5 hover:bg-sky-300"
+                  className="inline-flex items-center gap-1.5 rounded-xl bg-sky-400 px-4 py-2 font-mono text-xs font-semibold text-slate-950 transition-colors hover:bg-sky-300"
                 >
-                  <Dices className="h-4 w-4" aria-hidden="true" />
+                  <Dices className="h-4 w-4" />
                   Spin Topic
                 </button>
               </div>
-
-              {activeTopic ? (
-                <div className="space-y-3 rounded-xl border border-sky-400/30 bg-slate-950/75 p-4">
-                  <p className="font-mono text-[10px] tracking-wider text-sky-300 uppercase">
-                    Selected Prompt #{rouletteIndex + 1}
-                  </p>
-                  <h3 className="text-base font-semibold text-white">{activeTopic.prompt}</h3>
-                  <div className="space-y-2 border-t border-slate-800 pt-3 text-xs">
-                    <p className="text-slate-300">
-                      <span className="font-mono text-sky-300">01 Hook:</span> {activeTopic.hook}
-                    </p>
-                    <p className="text-slate-300">
-                      <span className="font-mono text-sky-300">02 Action Angle:</span>{' '}
-                      {activeTopic.tryActionAngle}
-                    </p>
-                    <p className="text-slate-300">
-                      <span className="font-mono text-emerald-300">03 Takeaway:</span>{' '}
-                      {activeTopic.takeaway}
-                    </p>
-                  </div>
-                </div>
-              ) : null}
             </div>
           </DraggableWindow>
         </div>

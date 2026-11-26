@@ -4,12 +4,13 @@ import { useState } from 'react';
 import {
   ArrowRight,
   CheckCircle2,
-  Cpu,
   ExternalLink,
   Layers,
-  Lightbulb,
   Shield,
+  FileText,
+  X,
 } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
 import { DraggableWindow } from '@/components/os/DraggableWindow';
 import { FEATURED_PROJECTS } from '@/content/featured-project';
 import { cn } from '@/lib/utils';
@@ -22,6 +23,7 @@ export function FeaturedProjectSection() {
   const [selectedNodeId, setSelectedNodeId] = useState<string>(
     FEATURED_PROJECTS[0]?.architectureNodes[0]?.id ?? '',
   );
+  const [showOverviewModal, setShowOverviewModal] = useState<boolean>(false);
 
   const project =
     FEATURED_PROJECTS.find((item) => item.slug === selectedSlug) ?? FEATURED_PROJECTS[0];
@@ -44,6 +46,7 @@ export function FeaturedProjectSection() {
       data-section-id="featured-project"
       className="mx-auto max-w-7xl scroll-mt-14 px-4 py-20 sm:px-6"
     >
+      {/* 1 Headline & 1 Supporting Line */}
       <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
         <div>
           <div className="inline-flex items-center gap-2 font-mono text-xs tracking-widest text-sky-300 uppercase">
@@ -55,11 +58,14 @@ export function FeaturedProjectSection() {
           </h2>
         </div>
 
-        <div
-          className="flex flex-wrap gap-2"
-          role="group"
-          aria-label="Switch featured project candidate"
-        >
+        <p className="max-w-md text-sm font-normal text-slate-300">
+          Zero-trust developer operating system with hardware-isolated execution.
+        </p>
+      </div>
+
+      {/* Hero Visual + 3 Stat Chips */}
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-slate-800 bg-slate-950/60 p-4">
+        <div className="flex flex-wrap gap-2" role="group" aria-label="Switch featured project candidate">
           {FEATURED_PROJECTS.map((item, idx) => (
             <button
               key={item.slug}
@@ -76,6 +82,18 @@ export function FeaturedProjectSection() {
             </button>
           ))}
         </div>
+
+        <div className="flex flex-wrap items-center gap-2 font-mono text-xs text-sky-200">
+          <span className="rounded-lg border border-sky-400/25 bg-sky-400/10 px-2.5 py-1">
+            96 Commits
+          </span>
+          <span className="rounded-lg border border-sky-400/25 bg-sky-400/10 px-2.5 py-1">
+            v0.1.0 Kernel
+          </span>
+          <span className="rounded-lg border border-sky-400/25 bg-sky-400/10 px-2.5 py-1">
+            SELinux
+          </span>
+        </div>
       </div>
 
       <DraggableWindow
@@ -87,12 +105,8 @@ export function FeaturedProjectSection() {
           </span>
         }
       >
-        <div className="mb-5 rounded-xl border border-sky-400/25 bg-sky-400/5 px-4 py-2.5 font-mono text-xs text-sky-200">
-          {project.rankReason}
-        </div>
-
         <div
-          className="mb-6 flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 pb-4"
+          className="mb-6 flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 pb-3"
           role="tablist"
           aria-label="Case study sections"
         >
@@ -113,7 +127,7 @@ export function FeaturedProjectSection() {
                 className={cn(
                   'rounded-lg px-3 py-1.5 font-mono text-xs transition-colors',
                   activeTab === tab.id
-                    ? 'border border-sky-400/40 bg-sky-400/15 text-sky-200'
+                    ? 'border border-sky-400/40 bg-sky-400/15 text-sky-200 font-semibold'
                     : 'text-slate-400 hover:bg-slate-800/70 hover:text-slate-200',
                 )}
               >
@@ -132,98 +146,57 @@ export function FeaturedProjectSection() {
               GitHub Repo
               <ExternalLink className="h-3.5 w-3.5 text-sky-400" aria-hidden="true" />
             </a>
-            {project.liveDemoUrl ? (
-              <a
-                href={project.liveDemoUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 rounded-lg bg-sky-400 px-3 py-1.5 font-mono text-xs font-semibold text-slate-950 hover:bg-sky-300"
-              >
-                Live Demo
-                <ExternalLink className="h-3.5 w-3.5" aria-hidden="true" />
-              </a>
-            ) : (
-              <span className="rounded-lg border border-dashed border-slate-700 px-3 py-1.5 font-mono text-[11px] text-slate-400">
-                [TODO: Live Demo URL]
-              </span>
-            )}
           </div>
         </div>
 
         {activeTab === 'overview' ? (
-          <div className="grid gap-6 lg:grid-cols-12">
-            <div className="space-y-4 lg:col-span-7">
-              <p className="text-base leading-relaxed font-medium text-white">{project.tagline}</p>
-              <div className="rounded-xl border border-slate-800 bg-slate-950/60 p-4">
-                <h3 className="font-mono text-xs tracking-wider text-rose-300 uppercase">
-                  Problem
-                </h3>
-                <p className="mt-1.5 text-sm leading-relaxed text-slate-300">{project.problem}</p>
-              </div>
-              <div className="rounded-xl border border-slate-800 bg-slate-950/60 p-4">
-                <h3 className="font-mono text-xs tracking-wider text-emerald-300 uppercase">
-                  Engineering Solution
-                </h3>
-                <p className="mt-1.5 text-sm leading-relaxed text-slate-300">{project.solution}</p>
-              </div>
+          <div className="space-y-4">
+            <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-800 bg-slate-950/60 p-4">
+              <p className="text-sm font-semibold text-white">{project.tagline}</p>
+              <button
+                type="button"
+                onClick={() => setShowOverviewModal(true)}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-slate-700 bg-slate-900 px-3 py-1.5 font-mono text-xs text-slate-200 hover:border-sky-400/40"
+              >
+                <FileText className="h-3.5 w-3.5 text-sky-400" />
+                <span>Read Full Brief</span>
+              </button>
             </div>
 
-            <div className="space-y-4 rounded-xl border border-slate-800 bg-slate-950/50 p-4 lg:col-span-5">
-              <h3 className="flex items-center gap-2 font-mono text-xs tracking-wider text-slate-300 uppercase">
-                <Cpu className="h-4 w-4 text-sky-400" aria-hidden="true" />
-                Verified Stack
-              </h3>
-              <div className="flex flex-wrap gap-2">
-                {project.stack.map((tech) => (
-                  <span
-                    key={tech}
-                    className="rounded-lg border border-sky-400/25 bg-sky-400/10 px-2.5 py-1 font-mono text-xs text-sky-200"
-                  >
-                    {tech}
-                  </span>
-                ))}
-              </div>
-              <div className="border-t border-slate-800 pt-3">
-                <p className="font-mono text-[11px] text-slate-400 uppercase">
-                  Repository Evidence
-                </p>
-                <ul className="mt-2 space-y-2 text-xs text-slate-300">
-                  {project.verifiedHighlights.map((item) => (
-                    <li key={item} className="flex items-start gap-2">
-                      <CheckCircle2
-                        className="mt-0.5 h-3.5 w-3.5 shrink-0 text-emerald-400"
-                        aria-hidden="true"
-                      />
-                      <span>{item}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
+            <div className="flex flex-wrap gap-1.5 pt-1">
+              {project.stack.map((tech) => (
+                <span
+                  key={tech}
+                  className="rounded-md border border-slate-800 bg-slate-900 px-2 py-0.5 font-mono text-[11px] text-slate-300"
+                >
+                  {tech}
+                </span>
+              ))}
             </div>
           </div>
         ) : null}
 
         {activeTab === 'architecture' ? (
-          <div className="space-y-6">
-            <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
+          <div className="space-y-4">
+            <div className="flex flex-col gap-2 lg:flex-row lg:items-center">
               {project.architectureNodes.map((node, idx) => (
                 <div key={node.id} className="flex flex-1 items-center gap-2">
                   <button
                     type="button"
                     onClick={() => setSelectedNodeId(node.id)}
                     className={cn(
-                      'w-full rounded-xl border p-3 text-left transition-colors',
+                      'w-full rounded-xl border p-2.5 text-left transition-colors',
                       activeNode?.id === node.id
                         ? 'border-sky-400 bg-sky-400/15 text-white'
-                        : 'border-slate-800 bg-slate-950/60 text-slate-300 hover:border-slate-700',
+                        : 'border-slate-800 bg-slate-950/60 text-slate-400 hover:border-slate-700 hover:text-slate-200',
                     )}
                   >
                     <p className="font-mono text-[10px] text-sky-300 uppercase">{node.layer}</p>
-                    <p className="mt-1 text-xs font-semibold">{node.label}</p>
+                    <p className="mt-0.5 text-xs font-semibold">{node.label}</p>
                   </button>
                   {idx < project.architectureNodes.length - 1 ? (
                     <ArrowRight
-                      className="hidden h-4 w-4 shrink-0 text-sky-400/70 lg:block"
+                      className="hidden h-3.5 w-3.5 shrink-0 text-slate-600 lg:block"
                       aria-hidden="true"
                     />
                   ) : null}
@@ -232,22 +205,22 @@ export function FeaturedProjectSection() {
             </div>
 
             {activeNode ? (
-              <div className="rounded-xl border border-sky-400/30 bg-slate-950/70 p-5">
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <h3 className="flex items-center gap-2 text-base font-semibold text-white">
+              <div className="rounded-xl border border-sky-400/30 bg-slate-950/70 p-4">
+                <div className="flex items-center justify-between gap-2">
+                  <h3 className="flex items-center gap-2 text-sm font-semibold text-white">
                     <Shield className="h-4 w-4 text-sky-400" aria-hidden="true" />
                     {activeNode.label}
                   </h3>
-                  <span className="rounded bg-sky-400/15 px-2 py-0.5 font-mono text-[11px] text-sky-300">
+                  <span className="rounded bg-sky-400/15 px-2 py-0.5 font-mono text-[10px] text-sky-300">
                     {activeNode.layer}
                   </span>
                 </div>
-                <p className="mt-2 text-sm text-slate-300">{activeNode.summary}</p>
-                <div className="mt-3 flex flex-wrap gap-2">
+                <p className="mt-1.5 text-xs text-slate-300">{activeNode.summary}</p>
+                <div className="mt-2.5 flex flex-wrap gap-1.5">
                   {activeNode.controls.map((ctrl) => (
                     <span
                       key={ctrl}
-                      className="rounded-md border border-slate-700 bg-slate-900 px-2.5 py-1 font-mono text-xs text-slate-200"
+                      className="rounded-md border border-slate-700 bg-slate-900 px-2 py-0.5 font-mono text-[11px] text-slate-300"
                     >
                       {ctrl}
                     </span>
@@ -259,19 +232,66 @@ export function FeaturedProjectSection() {
         ) : null}
 
         {activeTab === 'learnings' ? (
-          <div className="space-y-3">
-            {project.learnings.map((learning) => (
-              <div
-                key={learning}
-                className="flex items-start gap-3 rounded-xl border border-slate-800 bg-slate-950/60 p-4 text-sm text-slate-200"
-              >
-                <Lightbulb className="mt-0.5 h-4 w-4 shrink-0 text-amber-300" aria-hidden="true" />
-                <span>{learning}</span>
+          <div className="space-y-2">
+            {project.verifiedHighlights.map((item) => (
+              <div key={item} className="flex items-center gap-2 text-xs text-slate-300">
+                <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-emerald-400" />
+                <span>{item}</span>
               </div>
             ))}
           </div>
         ) : null}
       </DraggableWindow>
+
+      {/* Progressive Disclosure: Full Problem & Solution Modal */}
+      <AnimatePresence>
+        {showOverviewModal ? (
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-label="Case Study Overview"
+            className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          >
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowOverviewModal(false)}
+              className="absolute inset-0 bg-slate-950/80 backdrop-blur-sm"
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 10 }}
+              className="glass-panel relative z-10 w-full max-w-lg rounded-2xl border border-sky-400/30 p-6 shadow-2xl"
+            >
+              <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+                <span className="font-mono text-xs text-sky-300 uppercase">
+                  {project.name} {'//'} Architectural Brief
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setShowOverviewModal(false)}
+                  className="rounded-lg p-1 text-slate-400 hover:bg-slate-800 hover:text-white"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+
+              <div className="mt-4 space-y-4 text-xs leading-relaxed text-slate-300">
+                <div>
+                  <h4 className="font-mono text-rose-300 uppercase">Problem</h4>
+                  <p className="mt-1">{project.problem}</p>
+                </div>
+                <div>
+                  <h4 className="font-mono text-emerald-300 uppercase">Engineering Solution</h4>
+                  <p className="mt-1">{project.solution}</p>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        ) : null}
+      </AnimatePresence>
     </section>
   );
 }

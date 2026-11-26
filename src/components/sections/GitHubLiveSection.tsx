@@ -5,13 +5,14 @@ import {
   AlertCircle,
   ExternalLink,
   FolderGit2,
-  GitCommitHorizontal,
   GitFork,
   RefreshCw,
   Star,
+  X,
 } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
 import { DraggableWindow } from '@/components/os/DraggableWindow';
-import type { GitHubOverview } from '@/lib/validators/github';
+import type { GitHubOverview, GitHubRepoSummary } from '@/lib/validators/github';
 import { cn } from '@/lib/utils';
 
 interface GitHubLiveSectionProps {
@@ -23,6 +24,8 @@ export function GitHubLiveSection({ initialData }: GitHubLiveSectionProps) {
   const [selectedLanguage, setSelectedLanguage] = useState<string>('All');
   const [refreshing, setRefreshing] = useState<boolean>(false);
   const [refreshError, setRefreshError] = useState<string | null>(null);
+  const [inspectRepo, setInspectRepo] = useState<GitHubRepoSummary | null>(null);
+  const [showCommitsModal, setShowCommitsModal] = useState<boolean>(false);
 
   const languageTabs = useMemo(() => {
     const langs = new Set<string>(['All']);
@@ -61,6 +64,7 @@ export function GitHubLiveSection({ initialData }: GitHubLiveSectionProps) {
       data-section-id="github-live"
       className="mx-auto max-w-7xl scroll-mt-14 px-4 py-20 sm:px-6"
     >
+      {/* 1 Headline & 1 Supporting Line */}
       <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
         <div>
           <div className="inline-flex items-center gap-2 font-mono text-xs tracking-widest text-sky-300 uppercase">
@@ -72,18 +76,9 @@ export function GitHubLiveSection({ initialData }: GitHubLiveSectionProps) {
           </h2>
         </div>
 
-        <button
-          type="button"
-          onClick={() => void handleRefresh()}
-          disabled={refreshing}
-          className="inline-flex items-center gap-2 rounded-xl border border-sky-400/40 bg-sky-400/10 px-3.5 py-2 font-mono text-xs text-sky-100 transition-colors hover:bg-sky-400/20 disabled:opacity-50"
-        >
-          <RefreshCw
-            className={cn('h-3.5 w-3.5 text-sky-400', refreshing ? 'animate-spin' : '')}
-            aria-hidden="true"
-          />
-          {refreshing ? 'Refreshing...' : 'Sync /api/github'}
-        </button>
+        <p className="max-w-md text-sm font-normal text-slate-300">
+          Automated telemetry synced directly from verified public GitHub activity.
+        </p>
       </div>
 
       <DraggableWindow
@@ -98,172 +93,108 @@ export function GitHubLiveSection({ initialData }: GitHubLiveSectionProps) {
                 : 'bg-emerald-500/15 text-emerald-300',
             )}
           >
-            {data.isFallback ? 'CACHED FALLBACK' : 'LIVE ISR 300s'}
+            {data.isFallback ? 'CACHED FALLBACK' : 'LIVE ISR'}
           </span>
         }
       >
-        {data.isFallback && data.fallbackReason ? (
-          <div
-            role="status"
-            className="mb-5 flex items-center gap-2 rounded-xl border border-amber-400/30 bg-amber-400/10 px-3.5 py-2 font-mono text-xs text-amber-200"
-          >
-            <AlertCircle className="h-4 w-4 shrink-0" aria-hidden="true" />
-            <span>{data.fallbackReason}</span>
-          </div>
-        ) : null}
-
         {refreshError ? (
           <div
             role="alert"
-            className="mb-5 flex items-center gap-2 rounded-xl border border-rose-400/30 bg-rose-400/10 px-3.5 py-2 font-mono text-xs text-rose-200"
+            className="mb-4 flex items-center gap-2 rounded-xl border border-rose-400/30 bg-rose-400/10 px-3.5 py-2 font-mono text-xs text-rose-200"
           >
             <AlertCircle className="h-4 w-4 shrink-0" aria-hidden="true" />
             <span>{refreshError}</span>
           </div>
         ) : null}
 
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <div className="rounded-xl border border-slate-800 bg-slate-950/60 p-4">
-            <p className="font-mono text-[11px] text-slate-400 uppercase">Public Repos</p>
-            <p className="mt-1 text-2xl font-bold text-white">{data.profile.publicRepos}</p>
+        {/* Compact Stat Bar */}
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          <div className="rounded-xl border border-slate-800 bg-slate-950/60 p-3">
+            <p className="font-mono text-[10px] text-slate-400 uppercase">Repos</p>
+            <p className="mt-0.5 text-xl font-bold text-white">{data.profile.publicRepos}</p>
           </div>
-          <div className="rounded-xl border border-slate-800 bg-slate-950/60 p-4">
-            <p className="font-mono text-[11px] text-slate-400 uppercase">Total Stars</p>
-            <p className="mt-1 text-2xl font-bold text-sky-300">{data.totalStars}</p>
+          <div className="rounded-xl border border-slate-800 bg-slate-950/60 p-3">
+            <p className="font-mono text-[10px] text-slate-400 uppercase">Stars</p>
+            <p className="mt-0.5 text-xl font-bold text-sky-300">{data.totalStars}</p>
           </div>
-          <div className="rounded-xl border border-slate-800 bg-slate-950/60 p-4">
-            <p className="font-mono text-[11px] text-slate-400 uppercase">Primary Language</p>
-            <p className="mt-1 text-2xl font-bold text-white">
+          <div className="rounded-xl border border-slate-800 bg-slate-950/60 p-3">
+            <p className="font-mono text-[10px] text-slate-400 uppercase">Stack</p>
+            <p className="mt-0.5 truncate text-xl font-bold text-white">
               {data.languages[0]?.language ?? 'TypeScript'}
             </p>
           </div>
-          <div className="rounded-xl border border-slate-800 bg-slate-950/60 p-4">
-            <p className="font-mono text-[11px] text-slate-400 uppercase">Network</p>
-            <p className="mt-1 text-2xl font-bold text-white">
-              {data.profile.followers} <span className="text-xs font-normal text-slate-400">followers</span>
-            </p>
-          </div>
-        </div>
-
-        <div className="mt-6 grid gap-6 lg:grid-cols-12">
-          <div className="space-y-4 rounded-xl border border-slate-800 bg-slate-950/50 p-4 lg:col-span-5">
-            <h3 className="font-mono text-xs tracking-wider text-slate-300 uppercase">
-              Language Distribution
-            </h3>
-            <div className="flex h-2.5 w-full overflow-hidden rounded-full bg-slate-800">
-              {data.languages.map((lang, idx) => (
-                <div
-                  key={lang.language}
-                  style={{ width: `${Math.max(4, lang.percentage)}%` }}
-                  className={cn(
-                    idx === 0
-                      ? 'bg-sky-400'
-                      : idx === 1
-                        ? 'bg-cyan-400'
-                        : idx === 2
-                          ? 'bg-indigo-400'
-                          : idx === 3
-                            ? 'bg-emerald-400'
-                            : 'bg-slate-500',
-                  )}
-                  title={`${lang.language}: ${lang.percentage}%`}
-                />
-              ))}
-            </div>
-            <div className="flex flex-wrap gap-2">
-              {data.languages.map((lang) => (
-                <span
-                  key={lang.language}
-                  className="rounded-md border border-slate-800 bg-slate-900/80 px-2.5 py-1 font-mono text-[11px] text-slate-200"
-                >
-                  {lang.language} · {lang.percentage}%
-                </span>
-              ))}
-            </div>
-
-            <div className="pt-2">
-              <div className="mb-2 flex items-center justify-between">
-                <h3 className="font-mono text-xs tracking-wider text-slate-300 uppercase">
-                  84-Day Public Activity
-                </h3>
-                <span className="font-mono text-[10px] text-slate-400">Recent window</span>
-              </div>
-              <div
-                aria-label="84-day GitHub activity heatmap"
-                className="grid grid-cols-12 gap-1"
+          <div className="flex items-center justify-between rounded-xl border border-slate-800 bg-slate-950/60 p-3">
+            <div>
+              <p className="font-mono text-[10px] text-slate-400 uppercase">Commits</p>
+              <button
+                type="button"
+                onClick={() => setShowCommitsModal(true)}
+                className="mt-0.5 inline-flex items-center gap-1 font-mono text-xs font-semibold text-sky-400 hover:underline"
               >
-                {data.activityDays.slice(-84).map((day) => (
-                  <div
-                    key={day.date}
-                    title={`${day.date}: ${day.count} event(s)`}
-                    className={cn(
-                      'h-3 w-full rounded-[3px]',
-                      day.count === 0
-                        ? 'bg-slate-800/80'
-                        : day.count <= 2
-                          ? 'bg-sky-500/35'
-                          : day.count <= 4
-                            ? 'bg-sky-400/65'
-                            : 'bg-sky-300',
-                    )}
-                  />
-                ))}
-              </div>
+                <span>View Stream</span>
+                <ExternalLink className="h-3 w-3" />
+              </button>
             </div>
-          </div>
-
-          <div className="space-y-3 rounded-xl border border-slate-800 bg-slate-950/50 p-4 lg:col-span-7">
-            <h3 className="font-mono text-xs tracking-wider text-slate-300 uppercase">
-              Recent Commits
-            </h3>
-            <ul className="space-y-2.5">
-              {data.recentCommits.slice(0, 5).map((commit) => (
-                <li
-                  key={`${commit.repoName}-${commit.sha}`}
-                  className="flex items-start justify-between gap-3 rounded-lg border border-slate-800/80 bg-slate-900/50 px-3 py-2.5 text-xs"
-                >
-                  <div className="min-w-0 space-y-1">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <GitCommitHorizontal className="h-3.5 w-3.5 shrink-0 text-sky-400" aria-hidden="true" />
-                      <a
-                        href={commit.repoUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="font-mono font-semibold text-sky-300 hover:underline"
-                      >
-                        {commit.repoName}
-                      </a>
-                      <span className="rounded bg-slate-800 px-1.5 py-0.5 font-mono text-[10px] text-slate-300">
-                        {commit.sha}
-                      </span>
-                    </div>
-                    <p className="truncate text-slate-200">{commit.message}</p>
-                  </div>
-                  <time className="shrink-0 font-mono text-[10px] text-slate-400">
-                    {commit.committedAt.slice(0, 10)}
-                  </time>
-                </li>
-              ))}
-            </ul>
+            <button
+              type="button"
+              onClick={() => void handleRefresh()}
+              disabled={refreshing}
+              title="Sync telemetry"
+              className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-800 hover:text-white"
+            >
+              <RefreshCw className={cn('h-3.5 w-3.5', refreshing ? 'animate-spin' : '')} />
+            </button>
           </div>
         </div>
 
-        <div className="mt-6">
-          <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-            <h3 className="font-mono text-xs tracking-wider text-slate-300 uppercase">
-              Active Public Repositories
+        {/* 84-Day Activity Heatmap (compact) */}
+        <div className="mt-5 rounded-xl border border-slate-800 bg-slate-950/50 p-4">
+          <div className="mb-2 flex items-center justify-between">
+            <h3 className="font-mono text-[11px] tracking-wider text-slate-400 uppercase">
+              84-Day Public Activity
             </h3>
-            <div className="flex flex-wrap gap-1.5" role="group" aria-label="Filter repositories by language">
-              {languageTabs.map((lang) => (
+            <span className="font-mono text-[10px] text-sky-400">Live Pulse</span>
+          </div>
+          <div
+            aria-label="84-day GitHub activity heatmap"
+            className="grid grid-cols-12 gap-1 sm:grid-cols-28"
+          >
+            {data.activityDays.slice(-84).map((day) => (
+              <div
+                key={day.date}
+                title={`${day.date}: ${day.count} event(s)`}
+                className={cn(
+                  'h-3 w-full rounded-[2px]',
+                  day.count === 0
+                    ? 'bg-slate-800/80'
+                    : day.count <= 2
+                      ? 'bg-sky-500/35'
+                      : day.count <= 4
+                        ? 'bg-sky-400/65'
+                        : 'bg-sky-300',
+                )}
+              />
+            ))}
+          </div>
+        </div>
+
+        {/* Compact Repo Tiles */}
+        <div className="mt-5">
+          <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+            <h3 className="font-mono text-[11px] tracking-wider text-slate-400 uppercase">
+              Repositories
+            </h3>
+            <div className="flex flex-wrap gap-1" role="group" aria-label="Filter repositories by language">
+              {languageTabs.slice(0, 4).map((lang) => (
                 <button
                   key={lang}
                   type="button"
                   onClick={() => setSelectedLanguage(lang)}
                   className={cn(
-                    'rounded-lg px-2.5 py-1 font-mono text-[11px] transition-colors',
+                    'rounded-md px-2 py-0.5 font-mono text-[10px] transition-colors',
                     selectedLanguage === lang
-                      ? 'bg-sky-400 text-slate-950 font-semibold'
-                      : 'border border-slate-800 bg-slate-900/70 text-slate-300 hover:border-slate-700',
+                      ? 'bg-sky-400 font-semibold text-slate-950'
+                      : 'border border-slate-800 bg-slate-900/70 text-slate-400 hover:text-slate-200',
                   )}
                 >
                   {lang}
@@ -272,52 +203,160 @@ export function GitHubLiveSection({ initialData }: GitHubLiveSectionProps) {
             </div>
           </div>
 
-          <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
             {filteredRepos.map((repo) => (
-              <article
+              <div
                 key={repo.id}
-                className="flex flex-col justify-between rounded-xl border border-slate-800 bg-slate-950/60 p-4 transition-colors hover:border-sky-400/40"
+                onClick={() => setInspectRepo(repo)}
+                className="group flex cursor-pointer items-center justify-between rounded-xl border border-slate-800 bg-slate-950/60 p-3 transition-colors hover:border-sky-400/40 hover:bg-slate-900/40"
               >
-                <div>
-                  <div className="flex items-start justify-between gap-2">
-                    <a
-                      href={repo.htmlUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1.5 font-mono text-sm font-semibold text-white hover:text-sky-300"
-                    >
-                      <span className="truncate">{repo.name}</span>
-                      <ExternalLink className="h-3.5 w-3.5 shrink-0 text-sky-400" aria-hidden="true" />
-                    </a>
+                <div className="min-w-0 pr-2">
+                  <div className="flex items-center gap-1.5">
+                    <span className="truncate font-mono text-xs font-semibold text-white group-hover:text-sky-300">
+                      {repo.name}
+                    </span>
+                  </div>
+                  <div className="mt-1 flex items-center gap-2 font-mono text-[10px] text-slate-400">
                     {repo.language ? (
-                      <span className="shrink-0 rounded bg-sky-400/10 px-2 py-0.5 font-mono text-[10px] text-sky-300">
+                      <span className="flex items-center gap-1">
+                        <span className="h-1.5 w-1.5 rounded-full bg-sky-400" />
                         {repo.language}
                       </span>
                     ) : null}
+                    <span>·</span>
+                    <span>{repo.pushedAt.slice(0, 10)}</span>
                   </div>
-                  <p className="mt-2 line-clamp-2 text-xs leading-relaxed text-slate-300">
-                    {repo.description ?? 'Public engineering repository under active iteration.'}
-                  </p>
                 </div>
 
-                <div className="mt-4 flex items-center justify-between border-t border-slate-800/80 pt-3 font-mono text-[11px] text-slate-400">
-                  <div className="flex items-center gap-3">
-                    <span className="inline-flex items-center gap-1">
-                      <Star className="h-3 w-3 text-amber-300" aria-hidden="true" />
-                      {repo.stars}
-                    </span>
-                    <span className="inline-flex items-center gap-1">
-                      <GitFork className="h-3 w-3" aria-hidden="true" />
-                      {repo.forks}
-                    </span>
-                  </div>
-                  <span>Updated {repo.pushedAt.slice(0, 10)}</span>
+                <div className="flex shrink-0 items-center gap-2 font-mono text-xs text-slate-400">
+                  <span className="inline-flex items-center gap-0.5">
+                    <Star className="h-3 w-3 text-amber-300" />
+                    {repo.stars}
+                  </span>
+                  <ExternalLink className="h-3 w-3 text-slate-500 group-hover:text-sky-300" />
                 </div>
-              </article>
+              </div>
             ))}
           </div>
         </div>
       </DraggableWindow>
+
+      {/* Progressive Disclosure: Repo Detail Modal */}
+      <AnimatePresence>
+        {inspectRepo ? (
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-label="Repository Details"
+            className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          >
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setInspectRepo(null)}
+              className="absolute inset-0 bg-slate-950/80 backdrop-blur-sm"
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 10 }}
+              className="glass-panel relative z-10 w-full max-w-md rounded-2xl border border-sky-400/30 p-5 shadow-2xl"
+            >
+              <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+                <span className="font-mono text-xs text-sky-300">{inspectRepo.name}</span>
+                <button
+                  type="button"
+                  onClick={() => setInspectRepo(null)}
+                  className="rounded-lg p-1 text-slate-400 hover:bg-slate-800 hover:text-white"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+
+              <p className="mt-3 text-sm text-slate-300">
+                {inspectRepo.description || 'Public engineering repository under active iteration.'}
+              </p>
+
+              <div className="mt-4 flex items-center justify-between border-t border-slate-800 pt-3 font-mono text-xs text-slate-400">
+                <span>Updated: {inspectRepo.pushedAt.slice(0, 10)}</span>
+                <div className="flex gap-3">
+                  <span className="inline-flex items-center gap-1">
+                    <Star className="h-3 w-3 text-amber-300" /> {inspectRepo.stars}
+                  </span>
+                  <span className="inline-flex items-center gap-1">
+                    <GitFork className="h-3 w-3" /> {inspectRepo.forks}
+                  </span>
+                </div>
+              </div>
+
+              <div className="mt-4 flex justify-end">
+                <a
+                  href={inspectRepo.htmlUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 rounded-xl bg-sky-400 px-4 py-2 font-mono text-xs font-semibold text-slate-950 hover:bg-sky-300"
+                >
+                  <FolderGit2 className="h-3.5 w-3.5" />
+                  Open GitHub Repo
+                </a>
+              </div>
+            </motion.div>
+          </div>
+        ) : null}
+      </AnimatePresence>
+
+      {/* Progressive Disclosure: Commits Modal */}
+      <AnimatePresence>
+        {showCommitsModal ? (
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-label="Recent Commits Stream"
+            className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          >
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowCommitsModal(false)}
+              className="absolute inset-0 bg-slate-950/80 backdrop-blur-sm"
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 10 }}
+              className="glass-panel relative z-10 w-full max-w-lg rounded-2xl border border-sky-400/30 p-5 shadow-2xl"
+            >
+              <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+                <span className="font-mono text-xs text-sky-300">Live Commit Stream</span>
+                <button
+                  type="button"
+                  onClick={() => setShowCommitsModal(false)}
+                  className="rounded-lg p-1 text-slate-400 hover:bg-slate-800 hover:text-white"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+
+              <ul className="mt-3 space-y-2">
+                {data.recentCommits.slice(0, 5).map((commit) => (
+                  <li
+                    key={`${commit.repoName}-${commit.sha}`}
+                    className="rounded-lg border border-slate-800 bg-slate-900/60 p-2.5 text-xs"
+                  >
+                    <div className="flex items-center justify-between font-mono text-[10px] text-slate-400">
+                      <span className="font-semibold text-sky-300">{commit.repoName}</span>
+                      <span>{commit.committedAt.slice(0, 10)}</span>
+                    </div>
+                    <p className="mt-1 truncate text-slate-200">{commit.message}</p>
+                  </li>
+                ))}
+              </ul>
+            </motion.div>
+          </div>
+        ) : null}
+      </AnimatePresence>
     </section>
   );
 }

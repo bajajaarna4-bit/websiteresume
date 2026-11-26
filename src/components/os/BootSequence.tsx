@@ -80,7 +80,7 @@ export function BootSequence() {
               <button
                 type="button"
                 onClick={() => setVisible(false)}
-                className="inline-flex items-center gap-1.5 rounded-lg border border-slate-700 bg-slate-900/70 px-2.5 py-1 font-mono text-xs text-slate-200 transition-colors hover:border-sky-400/50 hover:text-sky-200"
+                className="relative z-10 inline-flex items-center gap-1.5 rounded-lg border border-slate-700 bg-slate-900/90 px-2.5 py-1 font-mono text-xs text-slate-200 transition-colors hover:border-sky-400/50 hover:text-sky-200"
               >
                 <FastForward className="h-3.5 w-3.5" aria-hidden="true" />
                 Skip
