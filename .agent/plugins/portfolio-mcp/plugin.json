@@ -1,0 +1,4 @@
+{
+  "name": "portfolio-mcp",
+  "description": "Least-privilege workspace MCP server bundle for portfolio development: GitHub (read-only), scoped read-only filesystem, Playwright visual QA, Context7 library docs, and Sequential Thinking."
+}

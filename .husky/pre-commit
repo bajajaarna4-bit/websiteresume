@@ -1,0 +1,41 @@
+#!/usr/bin/env sh
+
+set -eu
+
+echo "[pre-commit] Running Gitleaks secret scan on staged changes..."
+if ! command -v gitleaks >/dev/null 2>&1; then
+  echo "[pre-commit] ERROR: gitleaks is not installed or not on PATH." >&2
+  echo "[pre-commit] Install on Windows with: winget install gitleaks" >&2
+  exit 1
+fi
+
+gitleaks git --pre-commit --redact --staged --verbose
+
+if [ ! -f package.json ]; then
+  echo "[pre-commit] No package.json found yet; skipping JS/TS checks."
+  exit 0
+fi
+
+echo "[pre-commit] Running TypeScript typecheck..."
+if node -e "const p=require('./package.json'); process.exit(p.scripts && p.scripts.typecheck ? 0 : 1)" 2>/dev/null; then
+  npm run typecheck
+elif [ -f tsconfig.json ]; then
+  npx --no-install tsc --noEmit
+fi
+
+echo "[pre-commit] Running ESLint..."
+if node -e "const p=require('./package.json'); process.exit(p.scripts && p.scripts.lint ? 0 : 1)" 2>/dev/null; then
+  npm run lint
+else
+  echo "[pre-commit] ERROR: package.json must define a 'lint' script." >&2
+  exit 1
+fi
+
+echo "[pre-commit] Checking Prettier formatting..."
+if node -e "const p=require('./package.json'); process.exit(p.scripts && p.scripts['format:check'] ? 0 : 1)" 2>/dev/null; then
+  npm run format:check
+elif [ -f .prettierrc ]; then
+  npx --no-install prettier --check .
+fi
+
+echo "[pre-commit] All checks passed."

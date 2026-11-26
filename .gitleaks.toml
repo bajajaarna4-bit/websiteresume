@@ -1,0 +1,22 @@
+title = "Portfolio Workspace Gitleaks Configuration"
+
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "Ignore generated build and Playwright test output directories."
+paths = [
+  '''^\.next/''',
+  '''^node_modules/''',
+  '''^\.playwright-mcp/''',
+  '''^playwright-report/''',
+  '''^test-results/''',
+]
+
+[[allowlists]]
+description = "Ignore exact full-value documentation placeholder tokens only."
+regexes = [
+  '''^YOUR_[A-Z0-9_]+_HERE$''',
+  '''^<YOUR_[A-Z0-9_]+>$''',
+  '''^REPLACE_WITH_[A-Z0-9_]+$''',
+]
